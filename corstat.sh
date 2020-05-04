@@ -20,8 +20,8 @@ upd_coronastatus() {
     fi
 }
 
-case "$1" in
-    -h|--help)      cat << EOF
+help_coronastatus() {
+    cat << EOF
 Usage: $0 [command] [options]
 
 COMMANDS
@@ -43,7 +43,9 @@ UPDATE
      -a, --all   Searches for other instances of the program and
                  tells them to update themselves (including itself).
 EOF
-                ;;
+}
+
+case "$1" in
     s|show)     show_coronastatus
                 ;;
     m|monitor)  mntr_coronastatus
