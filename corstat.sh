@@ -22,7 +22,7 @@ upd_coronastatus() {
 
 case "$1" in
     -h|--help)      cat << EOF
-Usage: "$0" [command] [options]
+Usage: $0 [command] [options]
 
 COMMANDS
      [s]how      Update and show the current Corona Virus status.
