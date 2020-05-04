@@ -3,11 +3,37 @@
 src_dir="$HOME"/.cache
 src_file="$src_dir"/corona_tracker.cache
 
+mkdir -p "$src_dir"
+
 show_coronastatus() {
-    printf 'D  %s±i \n' "$(cat $src_file)"
+    if [ -n "$1" ]; then
+        case "$1" in
+            -f|--fmt|--format)  if [ -n "$2" ]; then
+                                    show_fmt="$2"
+                                else
+                                    cat << EOF
+$0: No format string given
+
+Try '$0 help' for more information.
+EOF
+                                    exit 1
+                                fi
+                                ;;
+            *)                  cat << EOF
+$0: unrecognized option '$1'
+
+Try '$0 help' for more information.
+EOF
+                                exit 1
+                                ;;
+        esac
+    fi
+    
+    printf "${show_fmt:-%s\n}" "$(cat $src_file)"
 }
 
 mntr_coronastatus() {
+    true
 }
 
 updt_coronastatus() {
@@ -49,27 +75,33 @@ UPDATE
 EOF
 }
 
-case "$1" in
-    s|show)     show_coronastatus
-                ;;
-    m|monitor)  mntr_coronastatus
-                ;;
-    u|update)   updt_coronastatus
-                ;;
-    h|help)     help_coronastatus
-                ;;
-    *)          if [ -n "$1" ]; then
-                    cat << EOF
+main() {
+    case "$1" in
+        s|show)     shift; show_coronastatus "$@"
+                    ;;
+        m|monitor)  shift; mntr_coronastatus "$@"
+                    ;;
+        u|update)   shift; updt_coronastatus "$@"
+                    ;;
+        h|help)     help_coronastatus
+                    ;;
+        *)          if [ -n "$1" ]; then
+                        cat << EOF
 $0: unrecognized command '$1'
 
 Try '$0 help' for more information.
 EOF
-                else
-                    cat << EOF
+                        exit 1
+                    else
+                        cat << EOF
 $0: no command given
 
 Try '$0 help' for more information.
 EOF
-                fi
-                ;;
-esac
+                        exit 1
+                    fi
+                    ;;
+    esac
+}
+
+main "$@"
