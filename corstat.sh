@@ -21,10 +21,27 @@ upd_coronastatus() {
 }
 
 case "$1" in
-    -h|--help)      cat < EOF
-Usage: "$0"  [options]
-    -s, --show  Show the current COVID-19 status.
-    -h, --help  Show this help message.
+    -h|--help)      cat << EOF
+Usage: "$0" [command] [options]
+
+COMMANDS
+     [s]how      Update and show the current Corona Virus status.
+     [m]onitor   Monitor the current Corona Virus status.
+     [u]pdate    Update the Corona Virus status cache.
+     [h]elp      Show this help message.
+
+SHOW
+    -f, --fmt,   Set the output format for printing. See printf(1).
+      --format   Default: "%s\n"
+
+MONITOR
+   -e, --every   Update the Corona Virus cache ourselves every N
+                 period of time. See sleep(1).
+                 Default: "60m"
+
+UPDATE
+     -a, --all   Searches for other instances of the program and
+                 tells them to update themselves (including itself).
 EOF
                     ;;
     -s|--show)      get_coronastatus
