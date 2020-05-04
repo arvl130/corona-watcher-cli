@@ -8,35 +8,125 @@ mkdir -p "$src_dir"
 touch "$src_file"
 
 show_coronastatus() {
+    show_fmt='%s\n'
     if [ -n "$1" ]; then
         case "$1" in
-            -f|--fmt|--format)  if [ -n "$2" ]; then
-                                    show_fmt="$2"
-                                else
-                                    cat << EOF
+            -f|--fmt|--format)
+                if [ -n "$2" ]; then
+                    show_fmt="$2"
+                else
+                    cat << EOF
 $0: No format string given
 
 Try '$0 help' for more information.
 EOF
-                                    exit 1
-                                fi
-                                ;;
-            *)                  cat << EOF
+                    exit 1
+                fi
+                ;;
+            *)  cat << EOF
 $0: unrecognized option '$1'
 
 Try '$0 help' for more information.
 EOF
-                                exit 1
-                                ;;
+                exit 1
+                ;;
         esac
     fi
     
     updt_coronastatus
-    printf "${show_fmt:-%s\n}" "$(cat $src_file)"
+    final_cmd="printf '$show_fmt' $(cat $src_file)"
+    eval "$final_cmd"
+    
+}
+
+mntr_timed() {
+    while :; do
+        updt_coronastatus
+        printf "$1" "$(cat $src_file)"
+        trap 'kill %%' USR1
+        sleep "$2" &
+        wait
+    done
+}
+
+mntr_inotify() {
+    ls "$src_file" | entr printf "$1" "$(cat $src_file)"
 }
 
 mntr_coronastatus() {
-    true
+    cmd_main="mntr_inotify"
+    show_fmt='%s\n'
+    show_time="60m"
+    last_opt=""
+    final_cmd=""
+    
+    if [ -n "$1" ] ; then
+        get_argopt="no"
+        while [ "$#" -gt 0 ]; do
+            [ "$get_argopt" = "no" ] && {
+                case "$1" in
+                    -e|--every) 
+                        cmd_main="mntr_timed"
+                        get_argopt="yes"
+                        last_opt="$1"
+                        ;;
+                    -f|--fmt|--format)
+                        get_argopt="yes"
+                        last_opt="$1"
+                        ;;
+                    *)  cat << EOF
+$0: unrecognized option '$1'
+
+Try '$0 help' for more information.
+EOF
+                        exit 1
+                        ;;
+                esac
+                shift
+            }
+
+            [ "$get_argopt" = "yes" ] && {
+                [ -z "$1" ] && {
+                    cat << EOF
+$0: option $last_opt needs an argument
+EOF
+                    exit 1
+                }
+                case "$1" in
+                    -e|--every|-f|--fmt|--format)
+                        cat << EOF
+$0: option $last_opt needs an argument
+EOF
+                        exit 1
+                        ;;
+                    *)  case "$last_opt" in
+                            -e|--every)
+                                show_time="$1"
+                                get_argopt="no"
+                                ;;
+                            -f|--fmt|--format)
+                                show_fmt="$1"
+                                get_argopt="no"
+                                ;;
+                        esac
+                        shift
+                        ;;
+                esac
+            }
+        done
+
+        case "$cmd_main" in
+            mntr_timed)
+                final_cmd="$cmd_main '$show_fmt' $show_time"
+                ;;
+            mntr_inotify)
+                final_cmd="$cmd_main '$show_fmt'"
+                ;;
+        esac
+    else
+        final_cmd="$cmd_main '$show_fmt'"
+    fi
+    eval "$final_cmd"
 }
 
 updt_coronastatus() {
@@ -52,6 +142,7 @@ $0: unrecognized option '$1'
 Try '$0 help' for more information.
 EOF
                         exit 1
+                        ;;
         esac
     fi
 
@@ -85,6 +176,8 @@ MONITOR
    -e, --every   Update the Corona Virus cache ourselves every N
                  period of time. See sleep(1).
                  Default: "60m"
+    -f, --fmt,   Set the output format for printing. See printf(1).
+      --format   Default: "%s\n"
 
 UPDATE
      -a, --all   Searches for other instances of the program and
