@@ -1,8 +1,10 @@
 #! /bin/sh -e
 
+COUNTRYCODE="${CORONA_WATCHER_COUNTRYCODE:-PH}"
+
 src_dir="$HOME"/.cache
 src_file="$src_dir"/corona_tracker.cache
-src_url="https://corona-stats.online/PH?minimal=true"
+src_url="https://corona-stats.online/$COUNTRYCODE"
 
 mkdir -p "$src_dir"
 touch "$src_file"
@@ -150,7 +152,7 @@ EOF
         sed -i \
             's/\x1B[@A-Z\\\]^_]\|\x1B\[[0-9:;<=>?]*[-!"#$%&'"'"'()*+,.\/]*[][\\@A-Z^_`a-z{|}~]//g' \
             "$src_file"
-        fmtout="$(awk '/PH/ {print $4}' "$src_file")"
+        fmtout="$(awk "/($COUNTRYCODE)/ {print \$7}" "$src_file" )"
         echo "$fmtout" > "$src_file"
     else
         printf "$0: updating Corona Virus status failed\n"
