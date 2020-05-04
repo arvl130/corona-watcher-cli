@@ -43,11 +43,27 @@ UPDATE
      -a, --all   Searches for other instances of the program and
                  tells them to update themselves (including itself).
 EOF
-                    ;;
-    -s|--show)      get_coronastatus
-                    ;;
-    -u|--update)    upd_coronastatus
-                    ;;
-    *)              ls "$src_file" | entr "$(readlink -f "$0")" -s
-                    ;;
+                ;;
+    s|show)     show_coronastatus
+                ;;
+    m|monitor)  mntr_coronastatus
+                ;;
+    u|update)   updt_coronastatus
+                ;;
+    h|help)     help_coronastatus
+                ;;
+    *)          if [ -n "$1" ]; then
+                    cat << EOF
+$0: unrecognized command '$1'
+
+Try '$0 help' for more information.
+EOF
+                else
+                    cat << EOF
+$0: no command given
+
+Try '$0 help' for more information.
+EOF
+                fi
+                ;;
 esac
