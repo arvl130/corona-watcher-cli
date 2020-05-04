@@ -2,8 +2,10 @@
 
 src_dir="$HOME"/.cache
 src_file="$src_dir"/corona_tracker.cache
+src_url="https://corona-stats.online/PH?minimal=true"
 
 mkdir -p "$src_dir"
+touch "$src_file"
 
 show_coronastatus() {
     if [ -n "$1" ]; then
@@ -29,6 +31,7 @@ EOF
         esac
     fi
     
+    updt_coronastatus
     printf "${show_fmt:-%s\n}" "$(cat $src_file)"
 }
 
@@ -37,15 +40,29 @@ mntr_coronastatus() {
 }
 
 updt_coronastatus() {
-    printf "Updating COVID19 status..."
-    if ping -c 5 1.1.1.1 > /dev/null 2>&1 && curl "https://corona-stats.online/PH?minimal=true" -so "$src_file"; then
-        awkout="$(awk '/PH/ {print $6}' "$src_file" )"
-        awkout="${awkout#?????}"
-        awkout="$(echo "$awkout" | sed 's/\x1B[@A-Z\\\]^_]\|\x1B\[[0-9:;<=>?]*[-!"#$%&'"'"'()*+,.\/]*[][\\@A-Z^_`a-z{|}~]//g')"
-        printf '%s\n' "$awkout" > "$src_file"
-        printf " done.\n"
+    if [ -n "$1" ]; then
+        case "$1" in
+            -a|--all)   for pid in $(pgrep $(basename $0)); do
+                            [ "$pid" != "$$" ] && kill -USR1 "$pid"
+                        done
+                        ;;
+            *)          cat << EOF
+$0: unrecognized option '$1'
+
+Try '$0 help' for more information.
+EOF
+                        exit 1
+        esac
+    fi
+
+    if curl "$src_url" -so "$src_file"; then
+        sed -i \
+            's/\x1B[@A-Z\\\]^_]\|\x1B\[[0-9:;<=>?]*[-!"#$%&'"'"'()*+,.\/]*[][\\@A-Z^_`a-z{|}~]//g' \
+            "$src_file"
+        fmtout="$(awk '/PH/ {print $4}' "$src_file")"
+        echo "$fmtout" > "$src_file"
     else
-        printf " something went wrong. :(\n"
+        printf "$0: updating Corona Virus status failed\n"
         exit 1
     fi
 }
