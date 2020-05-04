@@ -3,10 +3,14 @@
 src_dir="$HOME"/.cache
 src_file="$src_dir"/corona_tracker.cache
 
-get_coronastatus() {
+show_coronastatus() {
     printf 'D  %s±i \n' "$(cat $src_file)"
 }
-upd_coronastatus() {
+
+mntr_coronastatus() {
+}
+
+updt_coronastatus() {
     printf "Updating COVID19 status..."
     if ping -c 5 1.1.1.1 > /dev/null 2>&1 && curl "https://corona-stats.online/PH?minimal=true" -so "$src_file"; then
         awkout="$(awk '/PH/ {print $6}' "$src_file" )"
